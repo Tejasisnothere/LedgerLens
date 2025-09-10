@@ -1,0 +1,9 @@
+tensorflow
+numpy
+pandas
+seaborn
+matplotlib
+cloudinary
+google-api-core
+ElevenLabs
+python-dotenv
