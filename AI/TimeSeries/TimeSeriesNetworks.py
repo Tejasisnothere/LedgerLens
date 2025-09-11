@@ -1,14 +1,15 @@
+from keras.models import load_model
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow import keras
+from keras.models import Sequential, load_model
+from keras.layers import LSTM, Dense
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
-
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import numpy as np
+
 
 class CSV_LSTM_PREDICTION_PIPELINE:
     def __init__(self, dataset, time_column_name, target_column_name,
@@ -21,9 +22,10 @@ class CSV_LSTM_PREDICTION_PIPELINE:
         self.iteration = iteration
         self.relative_path_artifacts = relative_path_artifacts
 
-        self.model_path = f"{self.relative_path_artifacts}/lstm_model_{self.iteration}.joblib"
+        self.model_path = f"{self.relative_path_artifacts}/lstm_model_{self.iteration}.keras"
         self.scaler_path = f"{self.relative_path_artifacts}/lstm_scaler_{self.iteration}.joblib"
         self.target_scaler_path = f"{self.relative_path_artifacts}/lstm_target_scaler_{self.iteration}.joblib"
+
 
         self.df[self.time_col_name] = pd.to_datetime(self.df[self.time_col_name])
 
@@ -37,6 +39,26 @@ class CSV_LSTM_PREDICTION_PIPELINE:
 
         self.scaler = None
         self.target_scaler = None
+
+    def evaluate(self):
+        """
+        Evaluates the model on the X_test set and prints MAE, MSE, RMSE, and R2 score.
+        """
+        y_actual, y_pred = self.predict_X_test()
+        
+        mse = mean_squared_error(y_actual, y_pred)
+        rmse = np.sqrt(mse)
+        mae = mean_absolute_error(y_actual, y_pred)
+        r2 = r2_score(y_actual, y_pred)
+        
+        print(f"Evaluation Metrics for iteration {self.iteration}:")
+        print(f"Mean Absolute Error (MAE): {mae:.4f}")
+        print(f"Mean Squared Error (MSE): {mse:.4f}")
+        print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+        print(f"R² Score: {r2:.4f}")
+        
+        return {"mae": mae, "mse": mse, "rmse": rmse, "r2": r2}
+
 
     def extract_time_features(self):
         """Convert datetime to numerical features."""
@@ -90,14 +112,20 @@ class CSV_LSTM_PREDICTION_PIPELINE:
                        batch_size=batch_size, verbose=1)
 
     def save_model(self):
-        joblib.dump(self.model, self.model_path)
+        # Save the Keras model
+        self.model.save(f"{self.relative_path_artifacts}/lstm_model_{self.iteration}.keras")
+        # Save the scalers using joblib
         joblib.dump(self.scaler, self.scaler_path)
         joblib.dump(self.target_scaler, self.target_scaler_path)
 
+
     def load_model(self):
-        self.model = joblib.load(self.model_path)
+        # Load the Keras model
+        self.model = load_model(f"{self.relative_path_artifacts}/lstm_model_{self.iteration}.keras")
+        # Load the scalers using joblib
         self.scaler = joblib.load(self.scaler_path)
         self.target_scaler = joblib.load(self.target_scaler_path)
+
 
     def predict_sequence(self, input_seq):
         """Predict a single sequence and return in original scale."""
@@ -169,67 +197,3 @@ class CSV_LSTM_PREDICTION_PIPELINE:
         plt.ylabel(self.target_col_name)
         plt.legend()
         plt.show()
-
-    
-
-class CSV_LSTM_PREDICTION_PIPELINE:
-    # ... [all your existing methods unchanged] ...
-
-    def evaluate(self):
-        """
-        Evaluates the model on the X_test set and prints MAE, MSE, RMSE, and R2 score.
-        """
-        y_actual, y_pred = self.predict_X_test()
-        
-        mse = mean_squared_error(y_actual, y_pred)
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(y_actual, y_pred)
-        r2 = r2_score(y_actual, y_pred)
-        
-        print(f"Evaluation Metrics for iteration {self.iteration}:")
-        print(f"Mean Absolute Error (MAE): {mae:.4f}")
-        print(f"Mean Squared Error (MSE): {mse:.4f}")
-        print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
-        print(f"R² Score: {r2:.4f}")
-        
-        return {"mae": mae, "mse": mse, "rmse": rmse, "r2": r2}
-
-
-pt1 = plt.plot()
-pt2 = plt.plot()    
-# Initialize pipeline
-for i in range(3,10):
-    obj = CSV_LSTM_PREDICTION_PIPELINE(
-        dataset="../datasets/flight.csv",
-        time_column_name="Month",
-        target_column_name="Passengers",
-        prediction_step=i,
-        iteration=i,
-        relative_path_artifacts="artifacts"
-    )   
-
-
-    obj.prepare_data()
-    obj.train_test_split()
-    obj.scale_data()
-    obj.train_model(epochs=150, batch_size=4)
-    obj.save_model()
-
-    
-    pred_df = obj.extrapolate(start_date="1958-01", end_date="1970-12")
-    print(pred_df)
-
-
-
-    
-    obj.plot_X_test_predictions()
-
-    df = pd.read_csv("../datasets/flight.csv")
-    df['Month'] = pd.to_datetime(df['Month'])
-
-    plt.plot(pred_df['date'], pred_df['prediction'])
-    plt.plot(df['Month'], df['Passengers'])
-    plt.show()
-
-
-
