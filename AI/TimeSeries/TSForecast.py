@@ -103,5 +103,9 @@ def upload_csv():
         message = "Please upload a valid CSV file."
         return render_template('upload.html', message=message)
 
+import os
+
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))  
+    app.run(host="0.0.0.0", port=port)
+
