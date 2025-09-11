@@ -70,6 +70,8 @@ def runModel(filepath, inputColName, outputColName, start_date, end_date):
 def index():
     return render_template('upload.html')
 
+
+
 # Upload route
 @app.route('/upload', methods=['POST'])
 def upload_csv():
