@@ -1,4 +1,4 @@
-tensorflowtensorflow-cpu==2.13.0
+tensorflowtensorflow-cpu
 numpy
 pandas
 seaborn
