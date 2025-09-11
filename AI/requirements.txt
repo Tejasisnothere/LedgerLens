@@ -5,17 +5,11 @@ seaborn
 matplotlib
 
 google-api-core
-ElevenLabs
 python-dotenv
 scikit-learn
-kagglehub
 statsmodels
-pmdarima
 prophet
 tsfresh
 tslearn
-dart
-arch
 plotly
-psycopg2-binary
 scikeras

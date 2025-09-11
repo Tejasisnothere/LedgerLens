@@ -104,4 +104,4 @@ def upload_csv():
         return render_template('upload.html', message=message)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
