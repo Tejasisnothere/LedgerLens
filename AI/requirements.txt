@@ -1,4 +1,4 @@
-tensorflowtensorflow-cpu
+tensorflow-cpu
 numpy
 pandas
 seaborn
