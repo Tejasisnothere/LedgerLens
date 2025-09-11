@@ -3,7 +3,7 @@ numpy
 pandas
 seaborn
 matplotlib
-
+flask
 google-api-core
 python-dotenv
 scikit-learn
