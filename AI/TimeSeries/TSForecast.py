@@ -10,6 +10,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import io
+import requests
+
+# pred_df is your DataFrame
+
 
 from TimeSeriesNetworks import CSV_LSTM_PREDICTION_PIPELINE as CLPP
 
@@ -53,6 +58,21 @@ def runModel(filepath, inputColName, outputColName, start_date, end_date):
     obj.evaluate()
 
     pred_df = obj.extrapolate(start_date=start_date, end_date=end_date)
+    csv_buffer = io.StringIO()
+    pred_df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+    url = "https://example.com/receive_predictions"  # Replace with the real endpoint
+
+    files = {
+        'file': ('predictions.csv', csv_buffer.getvalue(), 'text/csv')
+    }
+
+    response = requests.post(url, files=files)
+
+    print("Response Status:", response.status_code)
+    print("Response Text:", response.text)
+
+
     print(pred_df)
 
     obj.plot_X_test_predictions()
@@ -108,4 +128,3 @@ import os
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  
     app.run(host="0.0.0.0", port=port)
-

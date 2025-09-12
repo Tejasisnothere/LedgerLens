@@ -1,27 +1,34 @@
+from flask import Flask, request, jsonify, render_template
 from collections import Counter
 from google.cloud import vision
 from google.api_core import exceptions
+import os
 
-def analyze_store_shelf(image_path: str, confidence_threshold: float = 0.8):
+app = Flask(__name__)
+
+# It's best practice to set the GOOGLE_APPLICATION_CREDENTIALS environment
+# variable in your terminal before running the app.
+# Example (Linux/macOS): export GOOGLE_APPLICATION_CREDENTIALS="/path/to/key.json"
+# Example (Windows): set GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\key.json"
+
+@app.route("/", methods=["GET"])
+def index():
+    """Serves the main page."""
+    return render_template('home.html')
+
+def analyze_store_shelf(image_content: bytes, confidence_threshold: float = 0.8) -> dict:
     """
-    Detects and counts items in an image, filtering by confidence and
-    extracting text from labels.
+    Analyzes an image of a store shelf using Google Cloud Vision API.
 
     Args:
-        image_path (str): The path to the local image file.
-        confidence_threshold (float): Minimum score for valid detection.
+        image_content: The binary content of the image file.
+        confidence_threshold: The minimum score for an object to be included.
+
+    Returns:
+        A dictionary containing the analysis results.
     """
     client = vision.ImageAnnotatorClient()
-
-    try:
-        print(f"Reading image from: {image_path}")
-        with open(image_path, "rb") as f:
-            content = f.read()
-    except FileNotFoundError:
-        print(f"Error: File not found at '{image_path}'")
-        return
-    
-    image = vision.Image(content=content)
+    image = vision.Image(content=image_content)
 
     features = [
         {"type_": vision.Feature.Type.OBJECT_LOCALIZATION},
@@ -29,40 +36,47 @@ def analyze_store_shelf(image_path: str, confidence_threshold: float = 0.8):
     ]
 
     try:
-        print("Sending request to Google Cloud Vision API...")
         response = client.annotate_image({"image": image, "features": features})
-        print("API request complete.")
     except exceptions.GoogleAPICallError as e:
-        print(f"API error occurred: {e}")
-        return
+        return {"error": f"Google API Error: {e.message}"}
 
     all_objects = response.localized_object_annotations
     filtered_objects = [obj for obj in all_objects if obj.score >= confidence_threshold]
-
-    print(f"\nFound {len(all_objects)} total objects. Kept {len(filtered_objects)} after applying {confidence_threshold:.0%} confidence threshold.")
-
-    if filtered_objects:
-        item_counts = Counter(obj.name for obj in filtered_objects)
-        print("\n--- Inventory Summary ---")
-        for item, count in item_counts.items():
-            print(f"Item: {item}, Quantity: {count}")
-        print("------------------------\n")
-    else:
-        print("No items detected with sufficient confidence.")
+    item_counts = Counter(obj.name for obj in filtered_objects)
 
     texts = response.text_annotations
-    if texts:
-        print("--- Detected Text on Products ---")
-        print(texts[0].description.replace('\n', ' | '))
-        print("-------------------------------\n")
-    else:
-        print("No text detected on the products.")
+    detected_text = texts[0].description.replace('\n', ' | ') if texts else "No text detected."
 
+    result = {
+        "total_objects_detected": len(all_objects),
+        "objects_above_threshold": len(filtered_objects),
+        "item_summary": dict(item_counts),
+        "detected_text": detected_text
+    }
+    return result
 
+@app.route('/analyze', methods=['POST'])
+def analyze_image_route():
+    """Handles the image upload and returns the analysis as JSON."""
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+
+    try:
+        image_content = file.read()
+        confidence = float(request.form.get('confidence_threshold', 0.8))
+
+        if not 0.0 <= confidence <= 1.0:
+            return jsonify({"error": "Confidence threshold must be between 0.0 and 1.0"}), 400
+
+        result = analyze_store_shelf(image_content, confidence)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    
-    image_file = "C:/Users/Tejas/Desktop/programming/code/aiml/LedgerLens/AI/ObjectDetection/unnamed.png"
-    
-    analyze_store_shelf(image_file, confidence_threshold=0.8)
-        
+    app.run(debug=True, port=5000)

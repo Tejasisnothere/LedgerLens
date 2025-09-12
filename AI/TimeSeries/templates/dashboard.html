@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpendWise Dashboard</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --primary: #42a5f5; --accent: #1e88e5; --prediction: #ffa726; --bg: #121212; --card-bg: #1e1e1e;
+      --text: #e0e0e0; --muted: #888; --radius: 12px; --shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    body { margin: 0; padding: 2rem; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+    h2 { color: var(--primary); text-align: center; margin-bottom: 20px; }
+    .graph-card { background: var(--card-bg); border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow); }
+    svg { display: block; margin: auto; border-radius: var(--radius); background: #181818; }
+    .axis path, .axis line { stroke: #555; } .axis text { fill: var(--muted); }
+    .grid line { stroke: #333; stroke-dasharray: 2; }
+    .actual-line { fill: none; stroke: var(--primary); stroke-width: 3; }
+    .actual-dot { fill: var(--primary); stroke: var(--bg); stroke-width: 2; }
+    .predicted-line { stroke: var(--prediction); stroke-dasharray: 6 6; stroke-width: 3; fill: none; }
+    .predicted-dot { fill: var(--prediction); stroke: var(--bg); stroke-width: 2; }
+    #graph-legend { display: flex; justify-content: center; gap: 20px; margin-top: 15px; font-size: 0.9rem; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-swatch { width: 25px; height: 4px; border-radius: 2px; }
+    .back-link { display: block; text-align: center; margin-top: 2rem; color: var(--primary); text-decoration: none; }
+  </style>
+</head>
+<body>
+    <div class="graph-card">
+          <h2>Data Trend & Prediction</h2>
+          <svg width="900" height="400" id="prediction-graph"></svg>
+          <div id="graph-legend"></div>
+    </div>
+    <a href="{{ url_for('upload_page') }}" class="back-link">Upload a new file</a>
+
+<script>
+    async function fetchData() {
+        try {
+            const [historicalRes, predictionRes] = await Promise.all([
+                fetch('/api/data'),
+                fetch('/api/predict')
+            ]);
+            if (!historicalRes.ok || !predictionRes.ok) {
+                throw new Error('Failed to fetch data from the server.');
+            }
+            const historicalData = await historicalRes.json();
+            const predictionData = await predictionRes.json();
+            drawGraph(historicalData, predictionData);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            document.querySelector('.graph-card').innerHTML = `<h2>Error</h2><p style="text-align:center;">Could not load data. Please try uploading again.</p>`;
+        }
+    }
+
+    function drawGraph(historicalData, predictionData) {
+        const values = historicalData.map(i => ({ date: new Date(i.date), amount: +i.amount }));
+        const lastActualPoint = values.length > 0 ? values[values.length - 1] : null;
+        const predictions = predictionData.map(p => ({ date: new Date(p.date), amount: +p.prediction }));
+        if (lastActualPoint) {
+            predictions.unshift(lastActualPoint); // Connect prediction line to actual data
+        }
+
+        const allData = [...values, ...predictions.slice(1)];
+        const width = 900, height = 400;
+        const margin = { top: 30, right: 40, bottom: 40, left: 60 };
+
+        const svg = d3.select("#prediction-graph");
+        svg.selectAll("*").remove();
+
+        const xScale = d3.scaleTime()
+            .domain(d3.extent(allData, d => d.date))
+            .range([margin.left, width - margin.right]);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, d3.max(allData, d => d.amount) * 1.1])
+            .range([height - margin.bottom, margin.top]);
+
+        // Axes and Grids
+        svg.append("g").attr("class", "grid").attr("transform", `translate(0, ${height - margin.bottom})`).call(d3.axisBottom(xScale).tickSize(-height + margin.top + margin.bottom).tickFormat(""));
+        svg.append("g").attr("class", "grid").attr("transform", `translate(${margin.left}, 0)`).call(d3.axisLeft(yScale).tickSize(-width + margin.left + margin.right).tickFormat(""));
+        svg.append("g").attr("transform", `translate(0, ${height - margin.bottom})`).call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y"))).attr("class", "axis");
+        svg.append("g").attr("transform", `translate(${margin.left}, 0)`).call(d3.axisLeft(yScale)).attr("class", "axis");
+
+        const line = d3.line().x(d => xScale(d.date)).y(d => yScale(d.amount)).curve(d3.curveMonotoneX);
+
+        // Draw Historical Data
+        svg.append("path").datum(values).attr("class", "actual-line").attr("d", line);
+        svg.selectAll(".actual-dot").data(values).enter().append("circle").attr("class", "actual-dot")
+            .attr("cx", d => xScale(d.date)).attr("cy", d => yScale(d.amount)).attr("r", 5);
+
+        // Draw Prediction Data
+        if (predictions.length > 1) {
+            svg.append("path").datum(predictions).attr("class", "predicted-line").attr("d", line);
+            svg.selectAll(".predicted-dot").data(predictions.slice(1)).enter().append("circle").attr("class", "predicted-dot")
+                .attr("cx", d => xScale(d.date)).attr("cy", d => yScale(d.amount)).attr("r", 5);
+        }
+        
+        // Draw Legend
+        const legend = d3.select("#graph-legend");
+        legend.html("");
+        legend.append("div").attr("class", "legend-item").html(`<div class="legend-swatch" style="background-color: var(--primary);"></div><span>Historical Data</span>`);
+        legend.append("div").attr("class", "legend-item").html(`<div class="legend-swatch" style="border-top: 3px dashed var(--prediction);"></div><span>Predicted Data</span>`);
+    }
+
+    window.onload = fetchData;
+</script>
+</body>
+</html>

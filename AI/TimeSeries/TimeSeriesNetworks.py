@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-
+import matplotlib.pyplot as plt
+import io, base64
 
 class CSV_LSTM_PREDICTION_PIPELINE:
     def __init__(self, dataset, time_column_name, target_column_name,
@@ -39,6 +40,28 @@ class CSV_LSTM_PREDICTION_PIPELINE:
 
         self.scaler = None
         self.target_scaler = None
+
+    def plot_X_test_predictions(self):
+        
+
+        y_actual, y_pred = self.predict_X_test()  # implement this in your class if not present
+
+        fig, ax = plt.subplots(figsize=(10,6))
+        ax.plot(y_actual, label="Actual")
+        ax.plot(y_pred, label="Predicted")
+        ax.set_title("X_test Predictions vs Actual")
+        ax.set_xlabel("Time Step")
+        ax.set_ylabel(self.target_column_name)
+        ax.legend()
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png')
+        buf.seek(0)
+        encoded = base64.b64encode(buf.read()).decode('utf-8')
+        buf.close()
+        plt.close(fig)
+        return encoded
+
 
     def evaluate(self):
         """
