@@ -1,4 +1,4 @@
-.env
-.log
-.csv
-.zip
+*.env
+*.log
+*.csv
+*.zip
