@@ -1,4 +1,11 @@
 from fastapi import FastAPI
+import os
+from dotenv import load_dotenv
+import sys
+from pydantic import BaseModel
+from src.exception import CustomException
+from src.logger import logging
+from src.components.dataIngestion import DataIngestionPipeline
 
 
 application = FastAPI()
@@ -6,7 +13,10 @@ application = FastAPI()
 app = application
 
 
-@app.get("/")
-def getHome():
-    return "hello"
+
+@app.get('/predict/{inv_id}')
+def predict(inv_id):
+    dip = DataIngestionPipeline()
+    dip.get_data()
+
 

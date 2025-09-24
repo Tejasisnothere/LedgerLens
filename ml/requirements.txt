@@ -1,0 +1,15 @@
+numpy
+pandas
+prophet
+matplotlib
+ipykernel
+seaborn
+fastapi
+plotly
+pymongo
+python-dotenv
+pydantic
+uvicorn
+httpx
+scikit-learn
+-e .
