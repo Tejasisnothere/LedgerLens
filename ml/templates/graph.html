@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Animated Time Series Graph</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #graph {
+            width: 70%;
+            height: 500px;
+            display: inline-block;
+        }
+        #controls {
+            display: inline-block;
+            vertical-align: top;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Animated Time Series Graph with FastAPI + Jinja2 + Plotly</h2>
+
+    <div id="graph"></div>
+    <div id="controls">
+        <label for="category">Select Category:</label>
+        <select id="category">
+            <option value="category1">Category 1</option>
+            <option value="category2">Category 2</option>
+            <option value="category3">Category 3</option>
+        </select>
+        <br><br>
+        <label for="graphType">Select Graph Type:</label>
+        <select id="graphType">
+            <option value="scatter">Scatter</option>
+            <option value="line">Line</option>
+            <option value="bar">Bar</option>
+        </select>
+        <br><br>
+        <button onclick="loadCategory()">Load Graph</button>
+    </div>
+
+    <script>
+        let data = {{ data | tojson }};
+        let graphType = "scatter";
+
+        let trace = {
+            x: [],
+            y: [],
+            type: 'scatter',
+            mode: 'lines+markers',
+            marker: { color: 'red' }
+        };
+
+        let layout = {
+            title: "Animated Time Series Plot",
+            xaxis: { title: "Date", type: "date" },
+            yaxis: { title: "Value" }
+        };
+
+        Plotly.newPlot('graph', [trace], layout);
+
+        let i = 0;
+        function animateGraph() {
+            if (i < data.x.length) {
+                Plotly.extendTraces('graph', {
+                    x: [[data.x[i]]],
+                    y: [[data.y[i]]]
+                }, [0]);
+                i++;
+                setTimeout(animateGraph, 50);
+            }
+        }
+        animateGraph();
+
+        function loadCategory() {
+            const category = document.getElementById("category").value;
+            graphType = document.getElementById("graphType").value;
+
+            fetch("/graph-data/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ category: category, graph_type: graphType })
+            })
+            .then(response => response.json())
+            .then(result => {
+                data = result.data;
+                i = 0;
+                Plotly.react('graph', [{
+                    x: [],
+                    y: [],
+                    type: result.graph_type === "bar" ? "bar" : "scatter",
+                    mode: result.graph_type === "scatter" ? "lines+markers" : undefined,
+                    marker: { color: 'red' }
+                }], layout);
+                animateGraph();
+            })
+            .catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
