@@ -1,7 +1,26 @@
 const Event = require("../models/eventModel");
 
 const handleCreateEvent = async (req, res) => {
-    // Create a new Event
+    try {
+        const { name, type, startDate, endDate, eventOf } = req.body;
+
+        if(!name || !type || !startDate || !endDate) {
+            return res.status(400).send({message: "Missing credentials"});
+        }
+
+        const event = new Event({
+            name,
+            type,
+            startDate,
+            endDate,
+            eventOf
+        })
+        await event.save();
+        return res.status(200).json({ success: true, event });
+
+    }catch(err){
+        return res.status(500).send({ success: false, error: err});
+    }
 };
 
 const handleUpdateEvent = async (req, res) => {
@@ -9,7 +28,11 @@ const handleUpdateEvent = async (req, res) => {
 };
 
 const handleDeleteEvent = async (req, res) => {
-    // Delete event
+    try{
+
+    }catch(err){
+        return res.status(500).send({success: false, error: err});
+    }
 };
 
 const handleGetEvent = async (req, res) => {

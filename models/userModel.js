@@ -20,9 +20,9 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
-    subscription: {
-        type: Number,
-        default: 0
+    location: {
+        type: Location,
+        required: false
     }
 }, { timestamps: true });
 

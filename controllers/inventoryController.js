@@ -35,12 +35,11 @@ async function handleCreateItem(req, res) {
             return res.status(400).json({ success: false, error: "Missing required fields" });
         }
 
-        const sameItem = await Item.findById({inventoryId})
+        const sameItem = await Item.findById({createdBy: inventoryId})
 
         const item = new Item({ name, amountBuy, priceBoughtPerItem, priceSoldPerItem, createdBy });
         await item.save();
 
-        // Update inventory: push new item & deduct funds
         const inventory = await Inventory.findById(inventoryId);
         if (!inventory) return res.status(404).json({ success: false, error: "Inventory not found" });
 
@@ -199,7 +198,6 @@ async function handleDeleteInventory(req, res) {
         const id  = req.body.id;
         const inventory = await Inventory.findByIdAndDelete(id);
         if (!inventory) return res.status(404).json({ success: false, error: "Inventory not found" });
-
         res.json({ success: true, message: "Inventory deleted successfully" });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

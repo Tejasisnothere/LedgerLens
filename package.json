@@ -18,7 +18,7 @@
     "express": "^5.1.0",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.19.0",
+    "mongodb": "^6.20.0",
     "mongoose": "^8.18.1",
     "react-native-gifted-charts": "^1.4.64",
     "react-native-svg": "^15.13.0"

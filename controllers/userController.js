@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 
 const handleCreateUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, location } = req.body;
         if (!name || !email || !password) {
             return res.status(400).send({message: "Missing credentials"});
         }
@@ -12,7 +12,7 @@ const handleCreateUser = async (req, res) => {
             return res.status(400).send({message: "User already exists"});
         }
 
-        const user = new User({ name, email, password });
+        const user = new User({ name, email, password, location });
         await user.save();
 
         return res.status(201).json({
@@ -20,7 +20,8 @@ const handleCreateUser = async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                location: user.location
             }
         });
     }catch(err) {

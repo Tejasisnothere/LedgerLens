@@ -24,7 +24,7 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Dependency lock files (if you don’t want to track them) I don't think this is required???????????
+# Dependency lock files (if you don’t want to track them)
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml

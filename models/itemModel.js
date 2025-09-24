@@ -10,6 +10,10 @@ const itemSchema = new Schema({
         required: true,
         default: 0
     },
+    category: {
+        type: String,
+        required: true
+    },
     priceBoughtPerItem: {
         type: Number,
         required: true,
@@ -23,7 +27,7 @@ const itemSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Inventory",
         required: true
-    }
+    },
 }, {timestamps: true});
 
 const Item = model("Item", itemSchema);

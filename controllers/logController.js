@@ -50,8 +50,6 @@ const handleDeleteAnalysis = async (req, res) => {
     }
 };
 
-// ================= Log Handlers =================
-
 const handleGetLogs = async (req, res) => {
     try {
         const logs = await Log.find().populate("logOf", "name amount pricePerItem");
@@ -85,6 +83,27 @@ const handleDeleteLogs = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
+};
+
+const handleGetTimedLogs = async (req, res) => {
+    try{
+        const {inventoryId, itemId} = req.body;
+        if(!inventoryId || !itemId){
+            return res.send({success: false, error: "Missing credentials"});
+        }
+        const timedLogs = await Log.aggregate([
+            { $group: {
+                    id: inventoryId,
+                }
+            }
+        ])
+    }catch(err){
+        return res.status(500).send({success: false, error: err});
+    }
+};
+
+const handleGetItemLogs = async (req, res) => {
+    //In case we require itemised logs
 };
 
 module.exports = {

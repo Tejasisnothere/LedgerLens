@@ -14,7 +14,7 @@ router.use(express.urlencoded({ extended: true }));
 //Item routes
 router.get("/:id", handleGetItemById);
 router.put("/:id", handleUpdateItem);
-router.delete("/:id", handleDeleteItem);
+router.delete("/", handleDeleteItem);
 router.post("/", handleCreateItem);
 
 module.exports = router;
