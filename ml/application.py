@@ -17,6 +17,9 @@ app = application
 @app.get('/predict/{inv_id}')
 def predict(inv_id):
     dip = DataIngestionPipeline()
-    dip.get_data()
+    dip.get_data(inv_id=inv_id)
 
-
+@app.get('/graph/{inv_id}')
+def graph(inv_id):
+    
+    pass

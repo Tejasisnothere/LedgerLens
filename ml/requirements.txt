@@ -12,4 +12,5 @@ pydantic
 uvicorn
 httpx
 scikit-learn
+jinja2
 -e .
