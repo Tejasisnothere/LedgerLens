@@ -108,7 +108,7 @@ class ModelPipeline:
         self.forecast['ds'] = pd.to_datetime(self.forecast['ds'])
 
         self.finalization()
-        self.plot()
+        # self.plot()
         self.calc_metrics()
 
         return self.check_confidence_surpass(confidence_percent=confid)

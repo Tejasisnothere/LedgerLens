@@ -76,8 +76,9 @@ class DataIngestionPipeline:
         df = df.sort_values(by='date', ignore_index=True)
         df.to_csv(os.path.join(DATA_DIR, "rawData.csv"), index=False)
         
-
         return df
+
+        
 
 
 class UserRequest(BaseModel):

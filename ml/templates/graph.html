@@ -1,109 +1,342 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Animated Time Series Graph</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpendWise Dashboard</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --primary: #42a5f5;
+      --accent: #1e88e5;
+      --bg: #121212;
+      --text: #e0e0e0;
+      --radius: 12px;
+      --card-bg: #1e1e1e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .graph-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.8rem 1.2rem;
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 1400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    #rangeSelect {
+      padding: 0.5rem 1rem;
+      font-size: 0.95rem;
+      border: 1px solid #555;
+      border-radius: 8px;
+      background-color: #2c2c2c;
+      color: var(--text);
+      cursor: pointer;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        width: 100%;
+        max-width: 1400px;
+    }
+
+    .graph-card {
+        background-color: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        grid-column: span 2; /* Default to half-width */
+        min-height: 350px;
+    }
+
+    .graph-card.featured {
+        grid-column: span 4; /* Full-width */
+    }
+
+    .graph-title {
+        font-size: 1.1rem;
+        color: var(--text);
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    svg {
+      display: block;
+      background: #181818;
+      border-radius: var(--radius);
+      width: 100%;
+      height: 100%;
+    }
+    
+    .pie-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .legend-box { display: flex; flex-direction: column; gap: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .legend-color { width: 15px; height: 15px; border-radius: 3px; }
+
+    /* D3 specific styles */
+    .axis path, .axis line { stroke: #888; }
+    .axis text { fill: #aaa; }
+    .grid line { stroke: #333; stroke-dasharray: 2,2; }
+    .dot { fill: var(--primary); stroke: var(--bg); stroke-width: 2; }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+        .graph-card {
+            grid-column: span 2; 
         }
-        #graph {
-            width: 70%;
-            height: 500px;
-            display: inline-block;
+        .graph-card.featured {
+            grid-column: span 4;
         }
-        #controls {
-            display: inline-block;
-            vertical-align: top;
-            margin-left: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .graph-card, .graph-card.featured {
+            grid-column: span 4; /* Stack all cards on smaller screens */
         }
-    </style>
+    }
+  </style>
 </head>
 <body>
-    <h2>Animated Time Series Graph with FastAPI + Jinja2 + Plotly</h2>
 
-    <div id="graph"></div>
-    <div id="controls">
-        <label for="category">Select Category:</label>
-        <select id="category">
-            <option value="Dairy">Dairy</option>
-            <option value="Pastry">Pastry</option>
-            <option value="Tea">Tea</option>
-        </select>
-        <br><br>
-        <label for="graphType">Select Graph Type:</label>
-        <select id="graphType">
-            <option value="scatter">Scatter</option>
-            <option value="line">Line</option>
-            <option value="bar">Bar</option>
-        </select>
-        <br><br>
-        <button onclick="loadCategory()">Load Graph</button>
+  <header class="graph-controls">
+    <label for="rangeSelect"><strong>View Data:</strong></label>
+    <select id="rangeSelect">
+      <option value="all">All Time</option>
+      <option value="month">This Month</option>
+      <option value="year">This Year</option>
+    </select>
+  </header>
+
+  <main class="dashboard-grid">
+      <div class="graph-card featured">
+          <h3 class="graph-title">Profit Trend</h3>
+          <svg id="trendChart"></svg>
+      </div>
+      <div class="graph-card">
+          <h3 class="graph-title">Cumulative Profit</h3>
+          <svg id="cumulativeAreaChart"></svg>
+      </div>
+      <div class="graph-card">
+        <h3 class="graph-title">Profit Per Category</h3>
+        <svg id="categoryBarChart"></svg>
     </div>
+      <div class="graph-card">
+          <h3 class="graph-title">Category Profit Split</h3>
+          <div class="pie-container">
+              <svg id="categoryPieChart"></svg>
+              <div id="legend" class="legend-box"></div>
+          </div>
+      </div>
+      <div class="graph-card">
+        <h3 class="graph-title">Category Proportions</h3>
+        <svg id="bubblePackChart"></svg>
+    </div>
+  </main>
 
-    <script>
+  <script>
+    // --- Data Injection & Initialization ---
+    // This line receives the data directly from your FastAPI backend.
+    // The 'tojson' filter is crucial for safely embedding the JSON data.
+    const allExpensesData = {{ expenses_data | tojson }};
+
+    function fetchExpenses() {
+        // This function now returns the data passed from the backend,
+        // after converting date strings back into JavaScript Date objects for D3.
+        const parsedData = allExpensesData.map(item => ({
+            ...item,
+            date: new Date(item.date) // D3's time scales need Date objects
+        }));
         
-        const inv_id = "{{ inv_id }}"; // Passed from backend
+        // Return it wrapped in a Promise to match the original async structure
+        return Promise.resolve(parsedData);
+    }
+    
+    // --- Charting Utilities ---
 
+    // Utility to get responsive dimensions and show 'No Data' message
+    function setupChart(svgSelector) {
+        const svg = d3.select(svgSelector);
+        svg.selectAll("*").remove();
+        const { width, height } = svg.node().getBoundingClientRect();
+        if (width === 0 || height === 0) return null; // Element not visible
+        return { svg, width, height };
+    }
 
-        let data = {{ data | tojson }};
-        let graphType = "scatter";
+    function showNoDataMessage(svg, width, height) {
+        if (!svg) return;
+        svg.append("text").attr("x", width / 2).attr("y", height / 2).attr("text-anchor", "middle").attr("fill", "var(--text)").text("No data for this period.");
+    }
 
-        let trace = {
-            x: [],
-            y: [],
-            type: 'scatter',
-            mode: 'lines+markers',
-            marker: { color: 'red' }
-        };
+    // --- D3 Chart Drawing Functions ---
 
-        let layout = {
-            title: "Animated Time Series Plot",
-            xaxis: { title: "Date", type: "date" },
-            yaxis: { title: "Value" }
-        };
+    function drawTrendChart(data) {
+      const chart = setupChart("#trendChart");
+      if (!chart || !data || data.length === 0) { showNoDataMessage(chart?.svg, chart?.width, chart?.height); return; }
+      
+      const margin = { top: 30, right: 40, bottom: 40, left: 60 };
+      const values = data.map(i => ({ date: i.date, amount: i.amount }));
 
-        Plotly.newPlot('graph', [trace], layout);
+      const xScale = d3.scaleTime().domain(d3.extent(values, d => d.date)).range([margin.left, chart.width - margin.right]);
+      const yScale = d3.scaleLinear().domain([0, d3.max(values, d => d.amount)]).range([chart.height - margin.bottom, margin.top]);
+      const line = d3.line().x(d => xScale(d.date)).y(d => yScale(d.amount)).curve(d3.curveMonotoneX);
+      
+      chart.svg.append("g").attr("class", "grid").attr("transform", `translate(${margin.left}, 0)`).call(d3.axisLeft(yScale).ticks(5).tickSize(-(chart.width - margin.left - margin.right)).tickFormat(""));
+      chart.svg.append("g").attr("transform", `translate(0, ${chart.height - margin.bottom})`).call(d3.axisBottom(xScale).ticks(8).tickFormat(d3.timeFormat("%b %d"))).attr("class", "axis");
+      chart.svg.append("g").attr("transform", `translate(${margin.left}, 0)`).call(d3.axisLeft(yScale).ticks(5)).attr("class", "axis");
+      
+      const path = chart.svg.append("path").datum(values).attr("fill", "none").attr("stroke", "var(--primary)").attr("stroke-width", 3).attr("d", line);
+      const pathLength = path.node().getTotalLength();
+      path.attr("stroke-dasharray", pathLength).attr("stroke-dashoffset", pathLength).transition().duration(1500).ease(d3.easeSinOut).attr("stroke-dashoffset", 0);
+      
+      chart.svg.selectAll("circle").data(values).enter().append("circle").attr("class", "dot").attr("cx", d => xScale(d.date)).attr("cy", d => yScale(d.amount)).attr("r", 0).transition().delay(1000).duration(500).attr("r", 5);
+    }
 
-        let i = 0;
-        function animateGraph() {
-            if (i < data.x.length) {
-                Plotly.extendTraces('graph', {
-                    x: [[data.x[i]]],
-                    y: [[data.y[i]]]
-                }, [0]);
-                i++;
-                setTimeout(animateGraph, 50);
-            }
-        }
-        animateGraph();
+    function drawPieChart(data) {
+        const chart = setupChart("#categoryPieChart");
+        const legend = d3.select("#legend");
+        legend.selectAll("*").remove();
 
-        function loadCategory() {
-            const category = document.getElementById("category").value;
-            graphType = document.getElementById("graphType").value;
+        if (!chart || !data || data.length === 0) { showNoDataMessage(chart?.svg, chart?.width, chart?.height); return; }
+        
+        const radius = Math.min(chart.width, chart.height) / 2.2;
+        const g = chart.svg.append("g").attr("transform", `translate(${chart.width / 2},${chart.height / 2})`);
+        const color = d3.scaleOrdinal(d3.schemeTableau10);
+        const pie = d3.pie().value(d => d.value).sort(null);
+        const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius);
+        const dataByCategory = d3.rollups(data, v => d3.sum(v, d => d.amount), d => d.category).map(([key, value]) => ({ name: key, value }));
+        
+        g.selectAll(".arc").data(pie(dataByCategory)).enter().append("path").attr("fill", d => color(d.data.name)).attr("d", arc).attr("stroke", "var(--bg)").style("stroke-width", "2px").transition().duration(1000).attrTween("d", function(d) { const i = d3.interpolate({startAngle: 0, endAngle: 0}, d); return t => arc(i(t)); });
+        
+        const legendItems = legend.selectAll(".legend-item").data(dataByCategory).enter().append("div").attr("class", "legend-item");
+        legendItems.append("div").attr("class", "legend-color").style("background-color", d => color(d.name));
+        legendItems.append("span").text(d => `${d.name}: ${d.value.toFixed(2)}`);
+    }
 
-            fetch(`/graph-data/${inv_id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ category: category, graph_type: graphType })
-            })
-            .then(response => response.json())
-            .then(result => {
-                data = result.data;
-                i = 0;
-                Plotly.react('graph', [{
-                    x: [],
-                    y: [],
-                    type: result.graph_type === "bar" ? "bar" : "scatter",
-                    mode: result.graph_type === "scatter" ? "lines+markers" : undefined,
-                    marker: { color: 'red' }
-                }], layout);
-                animateGraph();
-            })
-            .catch(err => console.error(err));
-        }
-    </script>
+    function drawBarChart(data) {
+        const chart = setupChart("#categoryBarChart");
+        if (!chart || !data || data.length === 0) { showNoDataMessage(chart?.svg, chart?.width, chart?.height); return; }
+        
+        const margin = { top: 20, right: 30, bottom: 80, left: 70 };
+        const dataByCategory = d3.rollups(data, v => d3.sum(v, d => d.amount), d => d.category).sort((a, b) => b[1] - a[1]);
+        const x = d3.scaleBand().domain(dataByCategory.map(d => d[0])).range([margin.left, chart.width - margin.right]).padding(0.2);
+        const y = d3.scaleLinear().domain([0, d3.max(dataByCategory, d => d[1])]).nice().range([chart.height - margin.bottom, margin.top]);
+        
+        chart.svg.append("g").attr("transform", `translate(0,${chart.height - margin.bottom})`).call(d3.axisBottom(x)).selectAll("text").attr("transform", "translate(-10,5)rotate(-45)").style("text-anchor", "end").style("font-size", "12px");
+        chart.svg.append("g").attr("transform", `translate(${margin.left},0)`).call(d3.axisLeft(y));
+        
+        chart.svg.selectAll("rect").data(dataByCategory).enter().append("rect")
+            .attr("x", d => x(d[0])).attr("width", x.bandwidth()).attr("fill", "var(--primary)")
+            .attr("y", d => y(0)).attr("height", 0)
+            .transition().duration(800).delay((d, i) => i * 50)
+            .attr("y", d => y(d[1])).attr("height", d => chart.height - margin.bottom - y(d[1]));
+    }
+    
+    function drawAreaChart(data) {
+        const chart = setupChart("#cumulativeAreaChart");
+        if (!chart || !data || data.length === 0) { showNoDataMessage(chart?.svg, chart?.width, chart?.height); return; }
+
+        let cumulativeAmount = 0;
+        const cumulativeData = data.map(d => { cumulativeAmount += d.amount; return { date: d.date, value: cumulativeAmount }; });
+        const margin = { top: 30, right: 40, bottom: 40, left: 60 };
+        const x = d3.scaleTime().domain(d3.extent(cumulativeData, d => d.date)).range([margin.left, chart.width - margin.right]);
+        const y = d3.scaleLinear().domain([0, d3.max(cumulativeData, d => d.value)]).nice().range([chart.height - margin.bottom, margin.top]);
+        
+        chart.svg.append("g").attr("transform", `translate(0, ${chart.height - margin.bottom})`).call(d3.axisBottom(x).ticks(5)).attr("class", "axis");
+        chart.svg.append("g").attr("transform", `translate(${margin.left}, 0)`).call(d3.axisLeft(y).ticks(5)).attr("class", "axis");
+        
+        const area = d3.area().x(d => x(d.date)).y0(chart.height - margin.bottom).y1(d => y(d.value)).curve(d3.curveMonotoneX);
+        const path = chart.svg.append("path").datum(cumulativeData).attr("fill", "var(--primary)").attr("fill-opacity", 0.4).attr("d", area);
+        
+        const linePath = chart.svg.append("path").datum(cumulativeData)
+          .attr("fill", "none").attr("stroke", "var(--accent)").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.date)).y(d => y(d.value)).curve(d3.curveMonotoneX));
+          
+        const lineLength = linePath.node().getTotalLength();
+        linePath.attr("stroke-dasharray", lineLength).attr("stroke-dashoffset", lineLength)
+            .transition().duration(2000).ease(d3.easeSinOut).attr("stroke-dashoffset", 0);
+    }
+    
+    function drawBubbleChart(data) {
+        const chart = setupChart("#bubblePackChart");
+        if (!chart || !data || data.length === 0) { showNoDataMessage(chart?.svg, chart?.width, chart?.height); return; }
+
+        const dataByCategory = d3.rollups(data, v => d3.sum(v, d => d.amount), d => d.category);
+        const root = d3.hierarchy({ children: dataByCategory }).sum(d => d[1]);
+        const pack = d3.pack().size([chart.width - 4, chart.height - 4]).padding(5);
+        const nodes = pack(root).descendants().slice(1);
+        const color = d3.scaleOrdinal(d3.schemeTableau10);
+        
+        const node = chart.svg.selectAll("g").data(nodes).enter().append("g").attr("transform", d => `translate(${d.x},${d.y})`);
+        
+        node.append("circle").attr("fill", (d,i) => color(i)).attr("fill-opacity", 0.7)
+            .attr("r", 0).transition().duration(750).delay((d, i) => i * 40).attr("r", d => d.r);
+            
+        node.append("text").attr("dy", "0.3em").style("text-anchor", "middle").style("font-size", d => `${Math.min(24, d.r / 3.5)}px`).attr("fill", "white")
+            .text(d => d.data[0]).style("opacity", 0).transition().delay(500).duration(500).style("opacity", 1);
+    }
+
+    // --- Main Application Logic & Event Handlers ---
+
+    function filterByRange(data, range) {
+      const now = new Date("2025-09-25"); // Using a fixed date for consistent demo filtering
+      if (range === "month") {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return data.filter(item => item.date >= startOfMonth && item.date <= now);
+      }
+      if (range === "year") {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        return data.filter(item => item.date >= startOfYear && item.date <= now);
+      }
+      return data; // "all"
+    }
+
+    async function updateAllCharts() {
+        const range = document.getElementById("rangeSelect").value;
+        const expenses = await fetchExpenses();
+        const filtered = filterByRange(expenses, range);
+        
+        drawTrendChart(filtered);
+        drawPieChart(filtered);
+        drawBarChart(filtered);
+        drawAreaChart(filtered);
+        drawBubbleChart(filtered);
+    }
+
+    document.getElementById("rangeSelect").addEventListener("change", updateAllCharts);
+    window.addEventListener("load", updateAllCharts);
+    window.addEventListener("resize", updateAllCharts); 
+  </script>
+
 </body>
 </html>
