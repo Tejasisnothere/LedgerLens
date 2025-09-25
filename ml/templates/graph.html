@@ -28,9 +28,9 @@
     <div id="controls">
         <label for="category">Select Category:</label>
         <select id="category">
-            <option value="category1">Category 1</option>
-            <option value="category2">Category 2</option>
-            <option value="category3">Category 3</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Pastry">Pastry</option>
+            <option value="Tea">Tea</option>
         </select>
         <br><br>
         <label for="graphType">Select Graph Type:</label>
@@ -44,6 +44,10 @@
     </div>
 
     <script>
+        
+        const inv_id = "{{ inv_id }}"; // Passed from backend
+
+
         let data = {{ data | tojson }};
         let graphType = "scatter";
 
@@ -80,7 +84,7 @@
             const category = document.getElementById("category").value;
             graphType = document.getElementById("graphType").value;
 
-            fetch("/graph-data/", {
+            fetch(`/graph-data/${inv_id}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ category: category, graph_type: graphType })

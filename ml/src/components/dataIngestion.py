@@ -44,10 +44,7 @@ class DataIngestionPipeline:
         
     
 
-    # '''
-    # {'_id': ObjectId('68d43823031e81af29cebf6b'), 'logOfInv': ObjectId('67f59b2b8e1a6c17f4a9c8d3'), 'name': 'Whole Milk', 
-    # 'quantity': 5, 'category': 'Dairy', 'profit': 4.25, 'createdAt': datetime.datetime(2025, 9, 8, 21, 0)}
-    # '''
+   
 
     def get_data(self, inv_id):
         df = pd.DataFrame(data={
@@ -74,12 +71,13 @@ class DataIngestionPipeline:
             })
 
             df = pd.concat([df,newdf],ignore_index=True)
+        df['date'] = pd.to_datetime(df['date'])
+        df['date'] = df['date'].dt.date
+        df = df.sort_values(by='date', ignore_index=True)
+        df.to_csv(os.path.join(DATA_DIR, "rawData.csv"), index=False)
+        
 
-            df.to_csv(os.path.join(DATA_DIR, "rawData.csv"), index=False)
-        print(df.head())
-
-        temp = df.iloc()[:5]
-        return temp
+        return df
 
 
 class UserRequest(BaseModel):

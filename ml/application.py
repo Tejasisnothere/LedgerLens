@@ -12,6 +12,9 @@ from fastapi.templating import Jinja2Templates
 import uvicorn
 from src.components.graphPipeline import GraphPipeline
 from datetime import datetime, timedelta
+from src.components.model import ModelPipeline
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
@@ -35,19 +38,22 @@ def dataframe_to_graph(df):
         }
 
 
-
-
 @app.get('/predict/{inv_id}')
 def predict(inv_id):
     dip = DataIngestionPipeline()
     output = dip.get_data(inv_id=inv_id)
+    mod = ModelPipeline()
+    dates = mod.pipeline(cat="groceries", confid=50)
+    dates.drop(columns=['yhat', 'trend', 'upper_bound', 'lower_bound'],inplace=True)
 
-    return {"success":"True", "data":output}
+    return {"success":"True", "data":dates}
 
 
 
 @app.get('/graph/{inv_id}/{category}')
 async def graph(inv_id, request: Request):
+    global inv
+    inv = inv_id
     dip = DataIngestionPipeline()
     dip.get_data(inv_id=inv_id)
     gp = GraphPipeline()
@@ -55,20 +61,20 @@ async def graph(inv_id, request: Request):
     
     return templates.TemplateResponse("graph.html", {"request": request, "data": graph_data})
     
-@app.post("/graph-data/{inv_id}")
-async def get_graph_data(inv_id, req: GraphRequest):
-    dates = [datetime.now() - timedelta(days=i) for i in range(30)][::-1]
+@app.post("/graph-data/")
+async def get_graph_data( req: GraphRequest):
+    
+    global inv
+    
+    dip = DataIngestionPipeline()
+    dip.get_data(inv_id=inv)
+    gp = GraphPipeline()
+    # graph_data = gp.cat_dataframe_to_graph(req.category)
 
-    if req.category == "category1":
-        values = np.random.randint(50, 100, size=30)
-    elif req.category == "category2":
-        values = np.random.randint(100, 200,  size=30)
-    else:
-        values = np.random.randint(10, 50, size=30)
 
-    df = pd.DataFrame({"ds": dates, "y": values})
+    
     return {
-        "data": dataframe_to_graph(df),
+        "data": gp.cat_dataframe_to_graph(req.category),
         "graph_type": req.graph_type
     }
 

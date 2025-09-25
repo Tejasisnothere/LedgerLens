@@ -19,4 +19,11 @@ class GraphPipeline:
             "y": self.df['profit'].tolist()
         }
 
-    
+    def cat_dataframe_to_graph(self, category):
+        self.df['date'] = pd.to_datetime(self.df['date'])
+        self.df = self.df.sort_values(by='date', ignore_index=True)
+        self.df = self.df[self.df['category']==category]
+        return {
+            "x": self.df['date'].dt.strftime("%Y-%m-%d").tolist(),
+            "y": self.df['profit'].tolist()
+        }
