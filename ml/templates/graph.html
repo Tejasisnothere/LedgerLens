@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SpendWise Dashboard</title>
+  <title>LedgerLens Dashboard</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     :root {
@@ -166,31 +166,25 @@
   </main>
 
   <script>
-    // --- Data Injection & Initialization ---
-    // This line receives the data directly from your FastAPI backend.
-    // The 'tojson' filter is crucial for safely embedding the JSON data.
+    
     const allExpensesData = {{ expenses_data | tojson }};
 
     function fetchExpenses() {
-        // This function now returns the data passed from the backend,
-        // after converting date strings back into JavaScript Date objects for D3.
+        
         const parsedData = allExpensesData.map(item => ({
             ...item,
-            date: new Date(item.date) // D3's time scales need Date objects
+            date: new Date(item.date) 
         }));
         
-        // Return it wrapped in a Promise to match the original async structure
+        
         return Promise.resolve(parsedData);
     }
     
-    // --- Charting Utilities ---
-
-    // Utility to get responsive dimensions and show 'No Data' message
     function setupChart(svgSelector) {
         const svg = d3.select(svgSelector);
         svg.selectAll("*").remove();
         const { width, height } = svg.node().getBoundingClientRect();
-        if (width === 0 || height === 0) return null; // Element not visible
+        if (width === 0 || height === 0) return null; 
         return { svg, width, height };
     }
 
@@ -199,7 +193,7 @@
         svg.append("text").attr("x", width / 2).attr("y", height / 2).attr("text-anchor", "middle").attr("fill", "var(--text)").text("No data for this period.");
     }
 
-    // --- D3 Chart Drawing Functions ---
+    
 
     function drawTrendChart(data) {
       const chart = setupChart("#trendChart");
@@ -306,10 +300,10 @@
             .text(d => d.data[0]).style("opacity", 0).transition().delay(500).duration(500).style("opacity", 1);
     }
 
-    // --- Main Application Logic & Event Handlers ---
+    
 
     function filterByRange(data, range) {
-      const now = new Date("2025-09-25"); // Using a fixed date for consistent demo filtering
+      const now = new Date("2025-09-25"); 
       if (range === "month") {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         return data.filter(item => item.date >= startOfMonth && item.date <= now);

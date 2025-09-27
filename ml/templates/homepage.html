@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopTrack</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary-glow: #ff7b00;
+            --secondary-glow: #7e57c2;
+            --bg: #0d0b1f;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --card-bg: rgba(20, 18, 38, 0.5);
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-glow);
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+            color: #fff;
+            text-decoration: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px var(--primary-glow), 0 0 30px var(--secondary-glow);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 0 25px var(--primary-glow), 0 0 45px var(--secondary-glow);
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 80vh;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+            background: -webkit-linear-gradient(45deg, var(--primary-glow), #fff, var(--secondary-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .typewriter-cursor {
+            display: inline-block;
+            width: 4px;
+            height: 4.5rem;
+            background-color: var(--primary-glow);
+            animation: blink 0.7s infinite;
+            margin-left: 8px;
+            vertical-align: bottom;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 1s ease-out 0.5s;
+            animation-fill-mode: both;
+        }
+
+        .hero .cta-button {
+             animation: fadeInUp 1s ease-out 1s;
+             animation-fill-mode: both;
+        }
+
+
+        /* --- Features Section --- */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 10rem;
+            padding-bottom: 5rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 20px var(--secondary-glow);
+        }
+
+        .feature-card .icon {
+            font-size: 3rem;
+            color: var(--primary-glow);
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+            .typewriter-cursor {
+                height: 3rem;
+            }
+            .hero p {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="main-container">
+        <header>
+            <a href="#" class="logo">Shop<span>Track</span></a>
+            <a href="/graph/67f59b2b8e1a6c17f4a9c8d3" class="cta-button">Launch Dashboard</a>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h1 id="hero-headline"></h1>
+                <p>Transform your scattered financial data into a constellation of clear, actionable insights. Clarity in the cosmos of your cashflow.</p>
+                <a href="/predict/67f59b2b8e1a6c17f4a9c8d3" class="cta-button">Get your TimeSeries analysis</a>
+            </section>
+
+            <section class="features">
+                <div class="feature-card">
+                    <div class="icon">📊</div>
+                    <h3>Dynamic Visualizations</h3>
+                    <p>Go beyond static reports. Interact with your data through dynamic, animated charts that bring your financial story to life.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">💡</div>
+                    <h3>Real-time Insights</h3>
+                    <p>Our intelligent backend processes your data to reveal trends, identify customer spending habits, and uncover opportunities for growth instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🔍</div>
+                    <h3>Powerful Filtering</h3>
+                    <p>Effortlessly slice and dice your data. Filter by date, category, or any metric to get the specific answers you need, when you need them.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- Interactive 3D Background with Three.js ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 5000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 5;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.005,
+            color: 0x00f5ff,
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+        camera.position.z = 2;
+
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        const clock = new THREE.Clock();
+        const animate = () => {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            
+            // Animate particles
+            particlesMesh.rotation.y = elapsedTime * 0.1;
+            
+            // Mouse interaction
+            particlesMesh.rotation.x = -mouseY * 0.2;
+            particlesMesh.rotation.y += mouseX * 0.2;
+
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // --- Headline Typewriter Effect ---
+        const headlineText = "Navigate Your Financial Universe.";
+        const headlineElement = document.getElementById('hero-headline');
+        let i = 0;
+        
+        function typewriter() {
+            if (i < headlineText.length) {
+                headlineElement.innerHTML = headlineText.substring(0, i + 1) + '<span class="typewriter-cursor"></span>';
+                i++;
+                setTimeout(typewriter, 100);
+            } else {
+                headlineElement.innerHTML = headlineText + '<span class="typewriter-cursor" style="animation: blink 1s infinite;"></span>';
+            }
+        }
+        window.addEventListener('load', typewriter);
+
+        // --- Scroll-driven Animations for Feature Cards ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    entry.target.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.feature-card').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

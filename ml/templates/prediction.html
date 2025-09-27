@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopTrack - Predictive Insights</title>
+    <style>
+        :root {
+            --primary-glow: #00f5ff;
+            --secondary-glow: #7e57c2;
+            --rise-glow: #4caf50;
+            --drop-glow: #f44336;
+            --bg: #0d0b1f;
+            --text: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --card-bg: rgba(20, 18, 38, 0.6);
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at top left, rgba(126, 87, 194, 0.3), transparent 30%),
+                              radial-gradient(circle at bottom right, rgba(0, 245, 255, 0.3), transparent 30%);
+            background-attachment: fixed;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-glow);
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+            color: #fff;
+            text-decoration: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--secondary-glow);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px) scale(1.03);
+        }
+        
+        /* --- Insights Terminal --- */
+        .insights-terminal {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .terminal-header h1 {
+            font-size: 1.8rem;
+            margin-left: 1rem;
+            color: var(--primary-glow);
+            text-shadow: 0 0 5px var(--primary-glow);
+        }
+        
+        .live-indicator {
+            width: 12px;
+            height: 12px;
+            background-color: var(--rise-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--rise-glow);
+            animation: pulse 2s infinite;
+        }
+
+        .terminal-body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            line-height: 1.8;
+            height: 500px;
+            overflow-y: auto;
+        }
+        
+        /* Custom scrollbar */
+        .terminal-body::-webkit-scrollbar { width: 8px; }
+        .terminal-body::-webkit-scrollbar-track { background: transparent; }
+        .terminal-body::-webkit-scrollbar-thumb { background-color: var(--primary-glow); border-radius: 20px; }
+
+
+        .prediction-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .prediction-line .icon {
+            margin-right: 1rem;
+            font-weight: bold;
+            font-size: 1.2rem;
+            width: 20px;
+        }
+        .prediction-line .icon.rise { color: var(--rise-glow); text-shadow: 0 0 5px var(--rise-glow); }
+        .prediction-line .icon.drop { color: var(--drop-glow); text-shadow: 0 0 5px var(--drop-glow); }
+        
+        .prediction-line .category {
+            font-weight: bold;
+            color: var(--secondary-glow);
+        }
+        .prediction-line .date {
+            color: var(--primary-glow);
+        }
+        .prediction-line .normal-text {
+            color: var(--text-muted);
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1rem;
+            background: var(--text);
+            animation: blink-cursor 0.8s infinite;
+            vertical-align: middle;
+        }
+
+
+        /* --- Keyframes --- */
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 10px 10px rgba(76, 175, 80, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes blink-cursor {
+            50% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <a href="/" class="logo">Shop<span>Track</span></a>
+            <a href="/graph/67f59b2b8e1a6c17f4a9c8d3" class="cta-button">View Dashboard</a>
+        </header>
+
+        <section class="insights-terminal">
+            <div class="terminal-header">
+                <div class="live-indicator"></div>
+                <h1>Live Predictive Feed</h1>
+            </div>
+            <div class="terminal-body" id="terminal-body">
+                <!-- Predictions will be typed here -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const predictionData = {{ data | tojson | safe }};
+
+        function parsePrediction(text) {
+            const riseMatch = text.match(/The product sales of (.*) is expected to rise on (.*)/);
+            if (riseMatch) {
+                return { type: 'rise', category: riseMatch[1], date: riseMatch[2] };
+            }
+            const dropMatch = text.match(/The product sales of (.*) is expected to drop on (.*)/);
+            if (dropMatch) {
+                return { type: 'drop', category: dropMatch[1], date: dropMatch[2] };
+            }
+            return null;
+        }
+
+        const terminalBody = document.getElementById('terminal-body');
+        let predictionIndex = 0;
+
+        function typePrediction() {
+            if (predictionIndex >= predictionData.length) {
+                // Remove cursor when done
+                const cursor = terminalBody.querySelector('.typing-cursor');
+                if(cursor) cursor.remove();
+                return;
+            }
+
+            const prediction = parsePrediction(predictionData[predictionIndex]);
+            if (prediction) {
+                const line = document.createElement('div');
+                line.className = 'prediction-line';
+                
+                const date = new Date(prediction.date);
+                const formattedDate = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+                line.innerHTML = `
+                    <span class="icon ${prediction.type}">${prediction.type === 'rise' ? '▲' : '▼'}</span>
+                    <div>
+                        <span class="normal-text">Sales for </span>
+                        <span class="category">${prediction.category}</span>
+                        <span class="normal-text"> expected to ${prediction.type} on </span>
+                        <span class="date">${formattedDate}</span>
+                    </div>
+                `;
+                
+                
+                 const oldCursor = terminalBody.querySelector('.typing-cursor');
+                if(oldCursor) oldCursor.remove();
+                
+                terminalBody.appendChild(line);
+            }
+            
+            
+            const cursorSpan = document.createElement('span');
+            cursorSpan.className = 'typing-cursor';
+            terminalBody.appendChild(cursorSpan);
+
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+            predictionIndex++;
+
+            setTimeout(typePrediction, Math.random() * 200 + 100); 
+        }
+
+        window.addEventListener('load', () => {
+             // Initial greeting
+            const greeting = document.createElement('div');
+            greeting.className = 'prediction-line';
+            greeting.style.opacity = '1';
+            greeting.innerHTML = `<span>&gt; Connecting to predictive model... Success.</span>`;
+            terminalBody.appendChild(greeting);
+            
+            const greeting2 = document.createElement('div');
+            greeting2.className = 'prediction-line';
+            greeting2.style.opacity = '1';
+            greeting2.innerHTML = `<span>&gt; Streaming live sales forecasts...</span><br><br>`;
+            terminalBody.appendChild(greeting2);
+
+            setTimeout(typePrediction, 1000); 
+        });
+    </script>
+</body>
+</html>
